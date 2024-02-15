@@ -1,4 +1,5 @@
 import requests
+import re
 
 API_key = "AIzaSyDYSOjkiATtDpW9qEIOPsbjwvdPqSuIEdA"
 COOR_DIFF = 0.00009 * 5  # 10m * n
@@ -79,8 +80,22 @@ def get_snap_to_roads(path):
         return []
 
 
-def is_correct_addr(addr, road_name):
-    return " ".join(road_name.lower().split()[:-1]) in addr.lower()
+def extract_road_name(address):
+    pattern = r"\b(?:\d+\s+)?(.*?)(?:\s+Road|Street)\b"
+    match = re.search(pattern, address)
+
+    if match:
+        return match.group(1)
+    else:
+        print("Error: Failed to extract road names")
+        return ""
+
+
+# TODO: variable names are poorly named, fix later
+def is_correct_addr(road_name, addr):
+    output_road_name = extract_road_name(addr).lower()
+    input_road_name = " ".join(road_name.lower().split()[:-1])
+    return input_road_name == output_road_name
 
 
 def process_road_points(snapped_points, road_name):
@@ -89,9 +104,9 @@ def process_road_points(snapped_points, road_name):
         return []
 
     place_id = snapped_points[0].get("placeId")  # need a better way to select place id
-    # addr = get_address(place_id)
-    # if not is_correct_addr(addr, road_name):
-    #     print("the place of chosen place ID doesn't match inputted road")
+    addr = get_address(place_id)
+    if not is_correct_addr(road_name, addr):
+        print("the place of chosen place ID doesn't match inputted road")
 
     location = snapped_points[0].get("location")
     road_coordinates = []
@@ -129,17 +144,35 @@ def main():
     proc_road_names = process_road_names(road_names)
 
     ## this is the real section (be careful and don't enable it or you'll incur fees)
-    for i in range(len(WKTs)):
-    # i = 0
-        latitude, longitude = process_WKT(WKTs[i])
-        path = make_coordinates(latitude, longitude)
-        # print("path", path)
-        points = get_snap_to_roads(path)
-        # print("points", points)
-        coordinates = process_road_points(points, proc_road_names[i])
-        # print("coordinates", coordinates)
-        orientation = determine_street_orientation(coordinates)
-        print(orientation, latitude, longitude, proc_road_names[i])
+    # for i in range(len(WKTs)):
+    # i = 1
+    # latitude, longitude = process_WKT(WKTs[i])
+    # path = make_coordinates(latitude, longitude)
+    # # print("path", path)
+    # points = get_snap_to_roads(path)
+    # # print("points", points)
+    # coordinates = process_road_points(points, proc_road_names[i])
+    # # print("coordinates", coordinates)
+    # orientation = determine_street_orientation(coordinates)
+    # print(orientation, latitude, longitude, proc_road_names[i])
+    
+    addrs = [
+        "207 Bethells Road, Auckland 0781, New Zealand",
+        "Unnamed Road, Te Henga (Bethells Beach) 0781, New Zealand",
+        "4-70 Whatipu Road, Huia, Auckland 0604, New Zealand",
+        "12-14 Seaview Road, Piha 0772, New Zealand",
+        "Piha Road, Waiatarua, Auckland 0604, New Zealand",
+        "60-96 Karekare Road, Auckland 0772, New Zealand",
+        "4-20 Sylvan Glade, Piha 0772, New Zealand",
+        "265 Glenbrook Beach Road, Glenbrook 2681, New Zealand",
+        "218-252 Clevedon-Kawakawa Road, Clevedon 2585, New Zealand",
+        "Waikopua Road, Whitford 2571, New Zealand",
+        "Whitford-Maraetai Road, Whitford 2571, New Zealand",
+        "10-22 Eastern Beach Road, Eastern Beach, Auckland 2012, New Zealand",
+        "245-235 Bucklands Beach Road, Bucklands Beach, Auckland 2012, New Zealand",
+    ]
+    for i in range(len(proc_road_names)):
+        print(is_correct_addr(proc_road_names[i], addrs[i]), proc_road_names[i], addrs[i])
 
 
 if __name__ == "__main__":
