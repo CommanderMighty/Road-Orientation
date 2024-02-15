@@ -20,6 +20,7 @@ data = [
     ["POINT (174.9110686595 -36.8818525921)", "BUCKLANDS BEACH RD"],
 ]
 
+
 def process_road_names(road_names):
     proc_road_names = []
     for name in road_names:
@@ -47,19 +48,20 @@ def make_coordinates(latitude, longitude):
     west = [latitude, longitude - COOR_DIFF]
     return f"{latitude}%2C{longitude}%7C{north[0]}%2C{north[1]}%7C{south[0]}%2C{south[1]}%7C{east[0]}%2C{east[1]}%7C{west[0]}%2C{west[1]}"
 
-# def get_address(place_id):
-#     endpoint = "https://maps.googleapis.com/maps/api/place/details/json"
-#     params = {"fields": "formatted_address", "place_id": place_id, "key": API_key}
-#     url = endpoint + "?" + "&".join([f"{key}={value}" for key, value in params.items()])
 
-#     response = requests.get(url)
-#     if response.status_code == 200:
-#         data = response.json()
-#         formatted_address = data.get("result").get("formatted_address")
-#         return formatted_address
-#     else:
-#         print("Error:", response.status_code)
-#         return []
+def get_address(place_id):
+    endpoint = "https://maps.googleapis.com/maps/api/place/details/json"
+    params = {"fields": "formatted_address", "place_id": place_id, "key": API_key}
+    url = endpoint + "?" + "&".join([f"{key}={value}" for key, value in params.items()])
+
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        formatted_address = data.get("result").get("formatted_address")
+        return formatted_address
+    else:
+        print("Error:", response.status_code)
+        return []
 
 
 def get_snap_to_roads(path):
@@ -78,8 +80,6 @@ def get_snap_to_roads(path):
 
 
 def is_correct_addr(addr, road_name):
-    print(" ".join(road_name.lower().split()[:-1]))
-    print(addr.lower())
     return " ".join(road_name.lower().split()[:-1]) in addr.lower()
 
 
@@ -88,12 +88,13 @@ def process_road_points(snapped_points, road_name):
         print("Nothing snapped")
         return []
 
-    print(snapped_points)
-
-    place_id = snapped_points[0].get("placeId") # need a better way to select place id
-    # addr = get_address(place_id)
-    # if not is_correct_addr(addr, road_name):
-    #     return []
+    place_id = snapped_points[0].get("placeId")  # need a better way to select place id
+    addr = get_address(place_id)
+    if not is_correct_addr(addr, road_name):
+        print('beep')
+        return []
+    else:
+        print('bop')
 
     location = snapped_points[0].get("location")
     road_coordinates = []
@@ -132,64 +133,17 @@ def main():
 
     ## this is the real section (be careful and don't enable it or you'll incur fees)
     # for i in range(len(WKTs)):
-    i = 1
-    latitude, longitude = process_WKT(WKTs[i])
-    path = make_coordinates(latitude, longitude)
-    print('path', path)
-    points = get_snap_to_roads(path)
-    print('points', points)
-    coordinates = process_road_points(points, proc_road_names[i])
-    print('coordinates', coordinates)
-    orientation = determine_street_orientation(coordinates)
-    print(orientation, latitude, longitude, proc_road_names[i])
+    # i = 0
+    # latitude, longitude = process_WKT(WKTs[i])
+    # path = make_coordinates(latitude, longitude)
+    # print("path", path)
+    # points = get_snap_to_roads(path)
+    # print("points", points)
+    # coordinates = process_road_points(points, proc_road_names[i])
+    # print("coordinates", coordinates)
+    # orientation = determine_street_orientation(coordinates)
+    # print(orientation, latitude, longitude, proc_road_names[i])
 
-    ## this is using place_ids from previous requests so I don't recall roads api unnecessarily
-    place_ids = [
-        "ChIJhTU6VpJtDW0RHa85MAgdzc0",
-        "ChIJwU2bDO1tDW0RnnP0mk-Nhec",
-        "ChIJ3eHutDBmDW0RpVov7ch5lQw",
-        "ChIJ5QbxvlJuDW0R76WIEbPxsHw",
-        "ChIJdcG-VjxpDW0R0EUEd32-HB4",
-        "ChIJee1qB3VvDW0R1BuKXhGpXSw",
-        "ChIJRYiXha1vDW0RHpKDXwvbvgs",
-        "ChIJIbhBfn-nEm0RehnxZEEiCwA",
-        "ChIJ8-snvgexcm0R6oXqVXRBvSY",
-        "ChIJiS3MoHO0cm0RifnihMljpt4",
-        "ChIJue5Ba3uzcm0RNozZEPiXcmI",
-        "ChIJxeQD7-1KDW0RgPBb994OeIE",
-        "ChIJkda4jORKDW0RRsL4mYeUTpw",
-    ]
-    
-    ## this calls places api, don't enable unless you need to
-    # for i in range(len(proc_road_names)):
-    # # i = 0
-    #     print("proc road name", proc_road_names[i])
-    #     print("place id", place_ids[i])
-    #     addr = get_address(place_ids[i])
-    #     print("formatted addr", addr)
-    #     print("is correct road", is_correct_addr(addr, proc_road_names[i]))
-        
-    ## output of places api 
-    addrs = [
-        "207 Bethells Road, Auckland 0781, New Zealand",
-        "Unnamed Road, Te Henga (Bethells Beach) 0781, New Zealand",
-        "4-70 Whatipu Road, Huia, Auckland 0604, New Zealand",
-        "12-14 Seaview Road, Piha 0772, New Zealand",
-        "Piha Road, Waiatarua, Auckland 0604, New Zealand",
-        "60-96 Karekare Road, Auckland 0772, New Zealand",
-        "4-20 Sylvan Glade, Piha 0772, New Zealand",
-        "265 Glenbrook Beach Road, Glenbrook 2681, New Zealand",
-        "218-252 Clevedon-Kawakawa Road, Clevedon 2585, New Zealand",
-        "Waikopua Road, Whitford 2571, New Zealand",
-        "Whitford-Maraetai Road, Whitford 2571, New Zealand",
-        "10-22 Eastern Beach Road, Eastern Beach, Auckland 2012, New Zealand",
-        "245-235 Bucklands Beach Road, Bucklands Beach, Auckland 2012, New Zealand",
-    ]
-    
-    # testing is_correct_addr method
-    # for i in range(len(proc_road_names)):
-    #     print(is_correct_addr(addrs[i], proc_road_names[i]))
-    #     print()
 
 if __name__ == "__main__":
     main()
