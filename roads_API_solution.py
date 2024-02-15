@@ -89,12 +89,9 @@ def process_road_points(snapped_points, road_name):
         return []
 
     place_id = snapped_points[0].get("placeId")  # need a better way to select place id
-    addr = get_address(place_id)
-    if not is_correct_addr(addr, road_name):
-        print('beep')
-        return []
-    else:
-        print('bop')
+    # addr = get_address(place_id)
+    # if not is_correct_addr(addr, road_name):
+    #     print("the place of chosen place ID doesn't match inputted road")
 
     location = snapped_points[0].get("location")
     road_coordinates = []
@@ -132,17 +129,17 @@ def main():
     proc_road_names = process_road_names(road_names)
 
     ## this is the real section (be careful and don't enable it or you'll incur fees)
-    # for i in range(len(WKTs)):
+    for i in range(len(WKTs)):
     # i = 0
-    # latitude, longitude = process_WKT(WKTs[i])
-    # path = make_coordinates(latitude, longitude)
-    # print("path", path)
-    # points = get_snap_to_roads(path)
-    # print("points", points)
-    # coordinates = process_road_points(points, proc_road_names[i])
-    # print("coordinates", coordinates)
-    # orientation = determine_street_orientation(coordinates)
-    # print(orientation, latitude, longitude, proc_road_names[i])
+        latitude, longitude = process_WKT(WKTs[i])
+        path = make_coordinates(latitude, longitude)
+        # print("path", path)
+        points = get_snap_to_roads(path)
+        # print("points", points)
+        coordinates = process_road_points(points, proc_road_names[i])
+        # print("coordinates", coordinates)
+        orientation = determine_street_orientation(coordinates)
+        print(orientation, latitude, longitude, proc_road_names[i])
 
 
 if __name__ == "__main__":
