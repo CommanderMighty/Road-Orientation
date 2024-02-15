@@ -1,5 +1,7 @@
 import webbrowser
 
+chrome_path = '"C:\Program Files\Google\Chrome\Application\chrome.exe" %s' 
+
 WKTs = [
   "POINT (174.4513638653 -36.8860243241)",
   "POINT (174.4497720357 -36.8913620998)",
@@ -16,24 +18,26 @@ WKTs = [
   "POINT (174.9110686595 -36.8818525921)",
 ]
 
+coordinates = []
+
 def process_WKT(WKT):
     coordinate = WKT.strip("POINT ()").split()
     latitude = float(coordinate[1])
     longitude = float(coordinate[0])
     return latitude, longitude
 
-for WKT in WKTs:
-    latitude, longitude = process_WKT(WKT)
-    url = f"http://127.0.0.1:5500/mapbox.html#20/{latitude}/{longitude}"
-    
-    chrome_path = '"C:\Program Files\Google\Chrome\Application\chrome.exe" %s' 
-    webbrowser.get(chrome_path).open(url)
+def open_mapbox_on_chrome():
+  for WKT in WKTs:
+      latitude, longitude = process_WKT(WKT)
+      url = f"http://127.0.0.1:5500/mapbox.html#20/{latitude}/{longitude}"
+      
+      webbrowser.get(chrome_path).open(url)
 
- 
-# for coordinate in coordinates:
-#     url = f"http://127.0.0.1:5500/mapbox/index.html#20/{coordinate[0]}/{coordinate[1]}"
-#     # url = f"https://mourner.github.io/road-orientation-map/#22/{latitude}/{longitude}"
-#     # url = f"http://maps.google.com/?ll={latitude},{longitude}"
-    
-#     chrome_path = '"C:\Program Files\Google\Chrome\Application\chrome.exe" %s' 
-#     webbrowser.get(chrome_path).open(url)
+
+def open_google_maps_on_chrome(): 
+  for coordinate in coordinates:
+      url = f"http://maps.google.com/?ll={coordinate[0]},{coordinate[1]}"     
+      webbrowser.get(chrome_path).open(url)
+      
+open_mapbox_on_chrome()
+# open_google_maps_on_chrome()
