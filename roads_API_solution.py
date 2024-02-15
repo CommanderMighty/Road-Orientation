@@ -3,38 +3,22 @@ import requests
 API_key = "AIzaSyDYSOjkiATtDpW9qEIOPsbjwvdPqSuIEdA"
 COOR_DIFF = 0.00009 * 5  # 10m * n
 
-WKTs = [
-    "POINT (174.4513638653 -36.8860243241)",
-    "POINT (174.4497720357 -36.8913620998)",
-    "POINT (174.556297882 -37.0165364501)",
-    "POINT (174.4712833983 -36.9534253801)",
-    "POINT (174.5438302975 -36.9442337643)",
-    "POINT (174.4801522996 -36.9775084447)",
-    "POINT (174.4699737384 -36.9573123506)",
-    "POINT (174.7312755423 -37.1828783774)",
-    "POINT (175.056786306 -36.9781819942)",
-    "POINT (175.000106141 -36.9285970881)",
-    "POINT (174.9726129099 -36.9410602158)",
-    "POINT (174.9097212116 -36.871404902)",
-    "POINT (174.9110686595 -36.8818525921)",
+# TODO: replace with the real data imported vis CSV or other format (depending on the requirement)
+data = [
+    ["POINT (174.4513638653 -36.8860243241)", "BETHELLS RD (WCC)"],
+    ["POINT (174.4497720357 -36.8913620998)", "BETHELLS RD (WCC)"],
+    ["POINT (174.556297882 -37.0165364501)", "WHATIPU RD"],
+    ["POINT (174.4712833983 -36.9534253801)", "SEAVIEW RD (PIHA)"],
+    ["POINT (174.5438302975 -36.9442337643)", "PIHA RD"],
+    ["POINT (174.4801522996 -36.9775084447)", "KAREKARE RD"],
+    ["POINT (174.4699737384 -36.9573123506)", "BEACH VALLEY RD"],
+    ["POINT (174.7312755423 -37.1828783774)", "GLENBROOK BEACH RD"],
+    ["POINT (175.056786306 -36.9781819942)", "CLEVEDON-KAWAKAWA RD"],
+    ["POINT (175.000106141 -36.9285970881)", "WAIKOPUA RD"],
+    ["POINT (174.9726129099 -36.9410602158)", "WHITFORD-MARAETAI RD"],
+    ["POINT (174.9097212116 -36.871404902)", "EASTERN BEACH RD"],
+    ["POINT (174.9110686595 -36.8818525921)", "BUCKLANDS BEACH RD"],
 ]
-
-road_names = [
-    "BETHELLS RD (WCC)",
-    "BETHELLS RD (WCC)",
-    "WHATIPU RD",
-    "SEAVIEW RD (PIHA)",
-    "PIHA RD",
-    "KAREKARE RD",
-    "BEACH VALLEY RD",
-    "GLENBROOK BEACH RD",
-    "CLEVEDON-KAWAKAWA RD",
-    "WAIKOPUA RD",
-    "WHITFORD-MARAETAI RD",
-    "EASTERN BEACH RD",
-    "BUCKLANDS BEACH RD",
-]
-
 
 def process_road_names(road_names):
     proc_road_names = []
@@ -142,6 +126,8 @@ def determine_street_orientation(road_coordinates):
 
 
 def main():
+    WKTs = [row[0] for row in data]
+    road_names = [row[1] for row in data]
     proc_road_names = process_road_names(road_names)
 
     ## this is the real section (be careful and don't enable it or you'll incur fees)
