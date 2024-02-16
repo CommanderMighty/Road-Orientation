@@ -47,22 +47,12 @@ def make_coordinates(latitude, longitude):
     south = [latitude - COOR_DIFF, longitude]
     east = [latitude, longitude + COOR_DIFF]
     west = [latitude, longitude - COOR_DIFF]
-    return f"{latitude}%2C{longitude}%7C{north[0]}%2C{north[1]}%7C{south[0]}%2C{south[1]}%7C{east[0]}%2C{east[1]}%7C{west[0]}%2C{west[1]}"
-
-
-def get_address(place_id):
-    endpoint = "https://maps.googleapis.com/maps/api/place/details/json"
-    params = {"fields": "formatted_address", "place_id": place_id, "key": API_key}
-    url = endpoint + "?" + "&".join([f"{key}={value}" for key, value in params.items()])
-
-    response = requests.get(url)
-    if response.status_code == 200:
-        data = response.json()
-        formatted_address = data.get("result").get("formatted_address")
-        return formatted_address
-    else:
-        print("Error:", response.status_code)
-        return []
+    north_north = [latitude + COOR_DIFF * 2, longitude]
+    south_south = [latitude - COOR_DIFF * 2, longitude]
+    east_east = [latitude, longitude + COOR_DIFF * 2]
+    west_west = [latitude, longitude - COOR_DIFF * 2]
+    
+    return f"{latitude}%2C{longitude}%7C{north[0]}%2C{north[1]}%7C{south[0]}%2C{south[1]}%7C{east[0]}%2C{east[1]}%7C{west[0]}%2C{west[1]}%7C{north_north[0]}%2C{north_north[1]}%7C{south_south[0]}%2C{south_south[1]}%7C{east_east[0]}%2C{east_east[1]}%7C{west_west[0]}%2C{west_west[1]}"
 
 
 def get_snap_to_roads(path):
@@ -78,25 +68,6 @@ def get_snap_to_roads(path):
     else:
         print("Error:", response.status_code)
         return []
-
-
-def extract_road_name(address):
-    pattern = r"\b(?:\d+\s+)?(.*?)(?:\s+Road|Street)\b"
-    match = re.search(pattern, address)
-
-    if match:
-        return match.group(1)
-    else:
-        print("Error: Failed to extract road names")
-        return ""
-
-
-# TODO: variable names are poorly named, fix later
-def is_correct_addr(road_name, addr):
-    output_road_name = extract_road_name(addr).lower()
-    input_road_name = " ".join(road_name.lower().split()[:-1])
-    return input_road_name == output_road_name
-
 
 def process_road_points(snapped_points, road_name):
     if len(snapped_points) < 2:
@@ -137,6 +108,38 @@ def determine_street_orientation(road_coordinates):
 
     return "N/S" if abs(max_lat - min_lat) > abs(max_long - min_long) else "E/W"
 
+def get_address(place_id):
+    endpoint = "https://maps.googleapis.com/maps/api/place/details/json"
+    params = {"fields": "formatted_address", "place_id": place_id, "key": API_key}
+    url = endpoint + "?" + "&".join([f"{key}={value}" for key, value in params.items()])
+
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        formatted_address = data.get("result").get("formatted_address")
+        return formatted_address
+    else:
+        print("Error:", response.status_code)
+        return []
+
+def extract_road_name(address):
+    addr_array = address.lower().split()
+    if bool(re.search(r"\d", addr_array[0])):
+        addr_array = addr_array[1:]
+
+    result = []
+    for element in addr_array:
+        if "," in element:
+            if "road" not in element and "street" not in element:
+                result.append(element[:-1])
+            break
+        result.append(element)
+
+    return " ".join(result).lower()
+
+def is_correct_addr(road_name, addr):
+    addrs_road_name = extract_road_name(addr)
+    return addrs_road_name == " ".join(road_name.lower().split()[:-1])
 
 def main():
     WKTs = [row[0] for row in data]
@@ -145,34 +148,51 @@ def main():
 
     ## this is the real section (be careful and don't enable it or you'll incur fees)
     # for i in range(len(WKTs)):
-    # i = 1
-    # latitude, longitude = process_WKT(WKTs[i])
-    # path = make_coordinates(latitude, longitude)
-    # # print("path", path)
+    i = 0
+    latitude, longitude = process_WKT(WKTs[i])
+    path = make_coordinates(latitude, longitude)
+    print("path", path)
     # points = get_snap_to_roads(path)
-    # # print("points", points)
-    # coordinates = process_road_points(points, proc_road_names[i])
-    # # print("coordinates", coordinates)
-    # orientation = determine_street_orientation(coordinates)
-    # print(orientation, latitude, longitude, proc_road_names[i])
+    # print("points", points)
     
-    addrs = [
-        "207 Bethells Road, Auckland 0781, New Zealand",
-        "Unnamed Road, Te Henga (Bethells Beach) 0781, New Zealand",
-        "4-70 Whatipu Road, Huia, Auckland 0604, New Zealand",
-        "12-14 Seaview Road, Piha 0772, New Zealand",
-        "Piha Road, Waiatarua, Auckland 0604, New Zealand",
-        "60-96 Karekare Road, Auckland 0772, New Zealand",
-        "4-20 Sylvan Glade, Piha 0772, New Zealand",
-        "265 Glenbrook Beach Road, Glenbrook 2681, New Zealand",
-        "218-252 Clevedon-Kawakawa Road, Clevedon 2585, New Zealand",
-        "Waikopua Road, Whitford 2571, New Zealand",
-        "Whitford-Maraetai Road, Whitford 2571, New Zealand",
-        "10-22 Eastern Beach Road, Eastern Beach, Auckland 2012, New Zealand",
-        "245-235 Bucklands Beach Road, Bucklands Beach, Auckland 2012, New Zealand",
+    points = [
+        {
+            "location": {"latitude": -36.88602151841069, "longitude": 174.45135707423856},
+            "originalIndex": 0,
+            "placeId": "ChIJhTU6VpJtDW0RHa85MAgdzc0",
+        },
+        {
+            "location": {"latitude": -36.885990199999995, "longitude": 174.4513773},
+            "placeId": "ChIJhTU6VpJtDW0RHa85MAgdzc0",
+        },
+        {
+            "location": {"latitude": -36.8857658, "longitude": 174.4515293},
+            "placeId": "ChIJhTU6VpJtDW0RHa85MAgdzc0",
+        },
+        {
+            "location": {"latitude": -36.885639415424215, "longitude": 174.4515869443197},
+            "originalIndex": 1,
+            "placeId": "ChIJhTU6VpJtDW0RHa85MAgdzc0",
+        },
+        {
+            "location": {"latitude": -36.885538, "longitude": 174.4516332},
+            "placeId": "ChIJhTU6VpJtDW0RHa85MAgdzc0",
+        },
+        {
+            "location": {"latitude": -36.885347900000006, "longitude": 174.4517242},
+            "placeId": "ChIJhTU6VpJtDW0RHa85MAgdzc0",
+        },
+        {
+            "location": {"latitude": -36.88527780153418, "longitude": 174.4517660172494},
+            "originalIndex": 5,
+            "placeId": "ChIJhTU6VpJtDW0RHa85MAgdzc0",
+        },
     ]
-    for i in range(len(proc_road_names)):
-        print(is_correct_addr(proc_road_names[i], addrs[i]), proc_road_names[i], addrs[i])
+    
+    # coordinates = process_road_points(points, proc_road_names[i])
+    # print("coordinates", coordinates)
+    # orientation = determine_street_orientation(coordinates)
+    # print(i, orientation)
 
 
 if __name__ == "__main__":
