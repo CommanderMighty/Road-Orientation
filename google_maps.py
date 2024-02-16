@@ -2,7 +2,7 @@ import requests
 import re
 
 API_key = "AIzaSyDYSOjkiATtDpW9qEIOPsbjwvdPqSuIEdA"
-COOR_DIFF = 0.00009 * 5  # 10m * n
+COOR_DIFF = 0.00009 * 2.5  # 10m * n
 
 # TODO: replace with the real data imported vis CSV or other format (depending on the requirement)
 data = [
@@ -69,15 +69,33 @@ def get_snap_to_roads(path):
         print("Error:", response.status_code)
         return []
 
+def find_place_id(snapped_points, road_name):
+    my_dict = {}
+    for snapped_point in snapped_points:
+        pid = snapped_point.get("placeId")
+        my_dict[pid] = my_dict.get(pid, 0) + 1
+
+    sorted_dict = dict(sorted(my_dict.items(), key=lambda item: item[1]))
+    print(sorted_dict)
+
+    for place_id, occurence in sorted_dict.items():
+        print(place_id, occurence)
+        addr = get_address()
+
+        if is_correct_addr(road_name, addr):
+            return place_id 
+        
+    return None
+
 def process_road_points(snapped_points, road_name):
     if len(snapped_points) < 2:
         print("Nothing snapped")
         return []
 
-    place_id = snapped_points[0].get("placeId")  # need a better way to select place id
-    addr = get_address(place_id)
-    if not is_correct_addr(road_name, addr):
+    place_id = find_place_id(snapped_points, road_name)
+    if not place_id:
         print("the place of chosen place ID doesn't match inputted road")
+        return []
 
     location = snapped_points[0].get("location")
     road_coordinates = []
@@ -148,51 +166,16 @@ def main():
 
     ## this is the real section (be careful and don't enable it or you'll incur fees)
     # for i in range(len(WKTs)):
-    i = 0
+    i = 1
     latitude, longitude = process_WKT(WKTs[i])
     path = make_coordinates(latitude, longitude)
     print("path", path)
-    # points = get_snap_to_roads(path)
-    # print("points", points)
-    
-    points = [
-        {
-            "location": {"latitude": -36.88602151841069, "longitude": 174.45135707423856},
-            "originalIndex": 0,
-            "placeId": "ChIJhTU6VpJtDW0RHa85MAgdzc0",
-        },
-        {
-            "location": {"latitude": -36.885990199999995, "longitude": 174.4513773},
-            "placeId": "ChIJhTU6VpJtDW0RHa85MAgdzc0",
-        },
-        {
-            "location": {"latitude": -36.8857658, "longitude": 174.4515293},
-            "placeId": "ChIJhTU6VpJtDW0RHa85MAgdzc0",
-        },
-        {
-            "location": {"latitude": -36.885639415424215, "longitude": 174.4515869443197},
-            "originalIndex": 1,
-            "placeId": "ChIJhTU6VpJtDW0RHa85MAgdzc0",
-        },
-        {
-            "location": {"latitude": -36.885538, "longitude": 174.4516332},
-            "placeId": "ChIJhTU6VpJtDW0RHa85MAgdzc0",
-        },
-        {
-            "location": {"latitude": -36.885347900000006, "longitude": 174.4517242},
-            "placeId": "ChIJhTU6VpJtDW0RHa85MAgdzc0",
-        },
-        {
-            "location": {"latitude": -36.88527780153418, "longitude": 174.4517660172494},
-            "originalIndex": 5,
-            "placeId": "ChIJhTU6VpJtDW0RHa85MAgdzc0",
-        },
-    ]
-    
-    # coordinates = process_road_points(points, proc_road_names[i])
-    # print("coordinates", coordinates)
-    # orientation = determine_street_orientation(coordinates)
-    # print(i, orientation)
+    points = get_snap_to_roads(path)
+    print("points", points)    
+    coordinates = process_road_points(points, proc_road_names[i])
+    print("coordinates", coordinates)
+    orientation = determine_street_orientation(coordinates)
+    print(i, orientation)
 
 
 if __name__ == "__main__":
