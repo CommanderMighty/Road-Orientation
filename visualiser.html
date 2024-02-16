@@ -21,12 +21,25 @@
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
+        function parseCoordinates(coordString) {
+            var pairs = coordString.split('%7C');
+            var coordinates = [];
+
+            pairs.forEach(function (pair) {
+                var latLong = pair.split('%2C');
+                var lat = parseFloat(latLong[0]);
+                var long = parseFloat(latLong[1]);
+                coordinates.push([lat, long]);
+            });
+
+            return coordinates;
+        }
+
         var map = L.map('map').setView([0, 0], 2); // Centered at (0,0) with zoom level 2
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
-
 
     </script>
 
