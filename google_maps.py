@@ -43,6 +43,7 @@ def process_WKT(WKT):
 
 
 def make_coordinates(latitude, longitude):
+    # 25m and 50m
     north = [latitude + COOR_DIFF, longitude]
     south = [latitude - COOR_DIFF, longitude]
     east = [latitude, longitude + COOR_DIFF]
@@ -97,13 +98,10 @@ def process_road_points(snapped_points, road_name):
         print("the place of chosen place ID doesn't match inputted road")
         return []
 
-    location = snapped_points[0].get("location")
     road_coordinates = []
-    road_coordinates.append([location.get("latitude"), location.get("longitude")])
-
-    for i in range(1, len(snapped_points)):
-        if snapped_points[i].get("placeId") == place_id:
-            location = snapped_points[i].get("location")
+    for snapped_point in snapped_points:
+        if snapped_point.get("placeId") == place_id:
+            location = snapped_point.get("location")
             road_coordinates.append(
                 [location.get("latitude"), location.get("longitude")]
             )
@@ -172,10 +170,10 @@ def main():
     print("path", path)
     points = get_snap_to_roads(path)
     print("points", points)    
-    coordinates = process_road_points(points, proc_road_names[i])
-    print("coordinates", coordinates)
-    orientation = determine_street_orientation(coordinates)
-    print(i, orientation)
+    # coordinates = process_road_points(points, proc_road_names[i])
+    # print("coordinates", coordinates)
+    # orientation = determine_street_orientation(coordinates)
+    # print(i, orientation)
 
 
 if __name__ == "__main__":
