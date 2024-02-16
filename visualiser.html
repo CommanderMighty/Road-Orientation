@@ -22,6 +22,9 @@
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
         function parseCoordinates(coordString) {
+            if (coordString.length == 0) {
+                return []
+            }
             var pairs = coordString.split('%7C');
             var coordinates = [];
 
@@ -35,12 +38,29 @@
             return coordinates;
         }
 
-        var map = L.map('map').setView([0, 0], 2); // Centered at (0,0) with zoom level 2
+        function renderString(str) {
+            var coordinates = parseCoordinates(str)
+            coordinates.forEach(coordinate => L.marker(coordinate).addTo(map))
+        }
+
+        function renderPoint(points) {
+            points.forEach(point => {
+                let coordinate = [point.location.latitude, point.location.longitude]
+                L.marker(coordinate).addTo(map);
+            })
+        }
+
+        var map = L.map('map').setView([-36.8509, 174.7645], 10);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
 
+        let str = ""
+        const points = [{ 'location': { 'latitude': -36.89126949443993, 'longitude': 174.44992497692377 }, 'originalIndex': 0, 'placeId': 'ChIJwU2bDO1tDW0RnnP0mk-Nhec' }, { 'location': { 'latitude': -36.8912036, 'longitude': 174.4498626 }, 'originalIndex': 1, 'placeId': 'ChIJwU2bDO1tDW0RnnP0mk-Nhec' }, { 'location': { 'latitude': -36.8912036, 'longitude': 174.4498626 }, 'placeId': 'ChIJJc0Deu1tDW0RCattoQ47kwM' }, { 'location': { 'latitude': -36.891375920932035, 'longitude': 174.44957453679012 }, 'originalIndex': 2, 'placeId': 'ChIJJc0Deu1tDW0RCattoQ47kwM' }, { 'location': { 'latitude': -36.89138151200802, 'longitude': 174.44956519033184 }, 'originalIndex': 4, 'placeId': 'ChIJJc0Deu1tDW0RCattoQ47kwM' }, { 'location': { 'latitude': -36.891423499999995, 'longitude': 174.44949499999998 }, 'placeId': 'ChIJJc0Deu1tDW0RCattoQ47kwM' }, { 'location': { 'latitude': -36.891469521946995, 'longitude': 174.449424147918 }, 'originalIndex': 6, 'placeId': 'ChIJJc0Deu1tDW0RCattoQ47kwM' }]
+
+        renderString(str)
+        renderPoint(points)
     </script>
 
 </body>
