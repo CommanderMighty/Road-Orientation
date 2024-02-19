@@ -29,7 +29,7 @@ def process_road_name(road_name):
     index_st = road_name.find(" ST")
     index = max(index_rd, index_st)
     if index != -1:
-        return road_name[: index + 3]
+        return road_name[: index]
     else:
         return road_name
 
@@ -85,11 +85,9 @@ def find_place_id(snapped_points, road_name):
         my_dict[pid] = my_dict.get(pid, 0) + 1
 
     sorted_dict = sorted(sorted(my_dict.items(), key=lambda item: item[1]))
-    print(sorted_dict)
 
     for place_id, _ in sorted_dict:
         addr = get_address(place_id)
-        print(addr)
         if is_correct_addr(road_name, addr):
             return place_id
 
@@ -159,7 +157,7 @@ def extract_road_name(address):
 
 def is_correct_addr(road_name, addr):
     addrs_road_name = extract_road_name(addr)
-    return addrs_road_name == " ".join(road_name.lower().split()[:-1])
+    return addrs_road_name == road_name.lower()
 
 
 def main():
@@ -167,20 +165,21 @@ def main():
     road_names = [row[1] for row in data]
 
     ## this is the real section (be careful and don't enable it or you'll incur fees)
-    for i in range(len(WKTs)):
-        latitude, longitude = process_WKT(WKTs[i])
-        proc_road_name = process_road_name(road_names[i])
-        
-        path = make_coordinates(latitude, longitude)
-        print("path", path)
-        points = get_snap_to_roads(path)
-        print("points", points)
-        place_id = find_place_id(points, proc_road_name[i])
-        print(place_id)
-        coordinates = process_road_points(points, place_id)
-        print("coordinates", coordinates)
-        orientation = determine_street_orientation(coordinates)
-        print(i, orientation)
+    # for i in range(len(WKTs)):
+    
+    i = 1
+    latitude, longitude = process_WKT(WKTs[i])
+    proc_road_name = process_road_name(road_names[i])
+    path = make_coordinates(latitude, longitude)
+    # print("path", path)
+    points = get_snap_to_roads(path)
+    # print("points", points)        
+    place_id = find_place_id(points, proc_road_name)
+    # print("place_id", place_id)
+    coordinates = process_road_points(points, place_id)
+    # print("coordinates", coordinates)
+    orientation = determine_street_orientation(coordinates)
+    print(i, orientation)
 
 
 if __name__ == "__main__":
