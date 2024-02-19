@@ -84,9 +84,10 @@ def find_place_id(snapped_points, road_name):
         pid = snapped_point.get("placeId")
         my_dict[pid] = my_dict.get(pid, 0) + 1
 
-    sorted_dict = sorted(my_dict.items(), key=lambda item: item[1])
+    sorted_dict = sorted(my_dict.items(), key=lambda item: item[1], reverse=True)
     for place_id, _ in sorted_dict:
         addr = get_address(place_id)
+        print(place_id, addr)
         if is_correct_addr(road_name, addr):
             return place_id
 
@@ -132,6 +133,9 @@ def extract_road_name(address):
 
 # From the Roads API output, filter out the coordinates that are not in the street provided
 def process_road_points(snapped_points, place_id):
+    if place_id is None:
+        return []
+    
     road_coordinates = []
     for snapped_point in snapped_points:
         if snapped_point.get("placeId") == place_id:
@@ -145,18 +149,19 @@ def process_road_points(snapped_points, place_id):
 
 def determine_street_orientation(road_coordinates):
     if len(road_coordinates) < 2:
-        print("No coordinate in the street")
+        print("Not enough coordinates in the street")
         return "Undeterminable"
-
+    
     latitudes = [coord[0] for coord in road_coordinates]
     longitudes = [coord[1] for coord in road_coordinates]
 
-    max_lat = max(latitudes)
-    min_lat = min(latitudes)
-    max_long = max(longitudes)
-    min_long = min(longitudes)
+    lat_dif = abs(max(latitudes) - min(latitudes))
+    long_dif = abs(max(longitudes) - min(longitudes))
 
-    return "N/S" if abs(max_lat - min_lat) > abs(max_long - min_long) else "E/W"
+    if lat_dif == 0 and long_dif == 0:
+        print("Not enough distance between coordinates")
+        return "Undeterminable"
+    return "N/S" if lat_dif > long_dif else "E/W"
 
 
 def main():
@@ -176,7 +181,7 @@ def main():
         coordinates = process_road_points(points, place_id)
         # print("coordinates", coordinates)
         orientation = determine_street_orientation(coordinates)
-        print(i, orientation)
+        print(i, orientation, road_names[i])
 
 
 if __name__ == "__main__":
