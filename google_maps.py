@@ -24,22 +24,22 @@ data = [
     ["POINT (174.9110686595 -36.8818525921)", "BUCKLANDS BEACH RD"],
 ]
 
-def process_road_name(road_name):
-    index_rd = road_name.find(" RD")
-    index_st = road_name.find(" ST")
-    index = max(index_rd, index_st)
-    if index != -1:
-        return road_name[: index]
-    else:
-        return road_name
-
-
 # This function processes the input WKT into usable latitude and longitude
 def process_WKT(WKT):
     coordinate = WKT.strip("POINT ()").split()
     latitude = float(coordinate[1])
     longitude = float(coordinate[0])
     return latitude, longitude
+
+
+def process_road_name(road_name):
+    index_rd = road_name.find(" RD")
+    index_st = road_name.find(" ST")
+    index = max(index_rd, index_st)
+    if index != -1:
+        return road_name[:index]
+    else:
+        return road_name
 
 
 # For using Roads API, you can input up to 100 coordinates and return the most likely roads the vehicle was traveling along.
@@ -68,24 +68,23 @@ def get_snap_to_roads(path):
     if response.status_code == 200:
         data = response.json()
         snapped_points = data.get("snappedPoints")
-        return snapped_points
+        if len(snapped_points) < 2:
+            print("Nothing snapped")
+            return []
+        else:
+            return snapped_points
     else:
         print("Error:", response.status_code)
         return []
 
 
 def find_place_id(snapped_points, road_name):
-    if len(snapped_points) < 2:
-        print("Nothing snapped")
-        return None
-
     my_dict = {}
     for snapped_point in snapped_points:
         pid = snapped_point.get("placeId")
         my_dict[pid] = my_dict.get(pid, 0) + 1
 
-    sorted_dict = sorted(sorted(my_dict.items(), key=lambda item: item[1]))
-
+    sorted_dict = sorted(my_dict.items(), key=lambda item: item[1])
     for place_id, _ in sorted_dict:
         addr = get_address(place_id)
         if is_correct_addr(road_name, addr):
@@ -93,6 +92,42 @@ def find_place_id(snapped_points, road_name):
 
     print("the place of chosen place ID doesn't match inputted road")
     return None
+
+
+def get_address(place_id):
+    endpoint = "https://maps.googleapis.com/maps/api/place/details/json"
+    params = {"fields": "formatted_address", "place_id": place_id, "key": API_key}
+    url = endpoint + "?" + "&".join([f"{key}={value}" for key, value in params.items()])
+
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        formatted_address = data.get("result").get("formatted_address")
+        return formatted_address
+    else:
+        print("Error:", response.status_code)
+        return []
+
+
+def is_correct_addr(road_name, addr):
+    addrs_road_name = extract_road_name(addr)
+    return addrs_road_name == road_name.lower()
+
+
+def extract_road_name(address):
+    addr_array = address.lower().split()
+    if bool(re.search(r"\d", addr_array[0])):
+        addr_array = addr_array[1:]
+
+    result = []
+    for element in addr_array:
+        if "," in element:
+            if "road" not in element and "street" not in element:
+                result.append(element[:-1])
+            break
+        result.append(element)
+
+    return " ".join(result).lower()
 
 
 # From the Roads API output, filter out the coordinates that are not in the street provided
@@ -124,62 +159,24 @@ def determine_street_orientation(road_coordinates):
     return "N/S" if abs(max_lat - min_lat) > abs(max_long - min_long) else "E/W"
 
 
-def get_address(place_id):
-    endpoint = "https://maps.googleapis.com/maps/api/place/details/json"
-    params = {"fields": "formatted_address", "place_id": place_id, "key": API_key}
-    url = endpoint + "?" + "&".join([f"{key}={value}" for key, value in params.items()])
-
-    response = requests.get(url)
-    if response.status_code == 200:
-        data = response.json()
-        formatted_address = data.get("result").get("formatted_address")
-        return formatted_address
-    else:
-        print("Error:", response.status_code)
-        return []
-
-
-def extract_road_name(address):
-    addr_array = address.lower().split()
-    if bool(re.search(r"\d", addr_array[0])):
-        addr_array = addr_array[1:]
-
-    result = []
-    for element in addr_array:
-        if "," in element:
-            if "road" not in element and "street" not in element:
-                result.append(element[:-1])
-            break
-        result.append(element)
-
-    return " ".join(result).lower()
-
-
-def is_correct_addr(road_name, addr):
-    addrs_road_name = extract_road_name(addr)
-    return addrs_road_name == road_name.lower()
-
-
 def main():
     WKTs = [row[0] for row in data]
     road_names = [row[1] for row in data]
 
     ## this is the real section (be careful and don't enable it or you'll incur fees)
-    # for i in range(len(WKTs)):
-    
-    i = 1
-    latitude, longitude = process_WKT(WKTs[i])
-    proc_road_name = process_road_name(road_names[i])
-    path = make_coordinates(latitude, longitude)
-    # print("path", path)
-    points = get_snap_to_roads(path)
-    # print("points", points)        
-    place_id = find_place_id(points, proc_road_name)
-    # print("place_id", place_id)
-    coordinates = process_road_points(points, place_id)
-    # print("coordinates", coordinates)
-    orientation = determine_street_orientation(coordinates)
-    print(i, orientation)
+    for i in range(len(WKTs)):
+        latitude, longitude = process_WKT(WKTs[i])
+        proc_road_name = process_road_name(road_names[i])
+        path = make_coordinates(latitude, longitude)
+        # print("path", path)
+        points = get_snap_to_roads(path)
+        # print("points", points)
+        place_id = find_place_id(points, proc_road_name)
+        # print("place_id", place_id)
+        coordinates = process_road_points(points, place_id)
+        # print("coordinates", coordinates)
+        orientation = determine_street_orientation(coordinates)
+        print(i, orientation)
 
 
 if __name__ == "__main__":
